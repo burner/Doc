@@ -24,6 +24,11 @@ __version__ = 'SPARK-0.7 (pre-alpha-7)'
 import re
 import sys
 import string
+import inspect
+
+def _line():
+    info = inspect.getframeinfo(inspect.currentframe().f_back)[0:3]
+    return '[%s:%d]' % (info[2], info[1])
 
 def _namelist(instance):
 	namelist, namedict, classlist = [], {}, [instance.__class__]
@@ -57,10 +62,11 @@ class GenericScanner:
 				rv.append(self.makeRE(name))
 
 		rv.append(self.makeRE('t_default'))
-		return string.join(rv, '|')
+		#return string.join(rv, '|') TODO
+		return '|'.join(rv)
 
-	def error(self, s, pos):
-		print("Lexical error at position %s" % pos)
+	def error(self, s, pos, line):
+		print("Lexical error at position %s %d" % (pos,line))
 		raise SystemExit
 
 	def position(self, newpos=None):
@@ -76,7 +82,7 @@ class GenericScanner:
 		while self.pos < n:
 			m = self.re.match(s, self.pos)
 			if m is None:
-				self.error(s, self.pos)
+				self.error(s, self.pos, _line())
 
 			groups = m.groups()
 			self.pos = m.end()
@@ -180,7 +186,8 @@ class GenericParser:
 
 	def addRule(self, doc, func, _preprocess=1):
 		fn = func
-		rules = string.split(doc)
+		#rules = string.split(doc) TODO
+		rules = doc.split()
 
 		index = []
 		for i in range(len(rules)):
@@ -303,8 +310,8 @@ class GenericParser:
 	def typestring(self, token):
 		return None
 
-	def error(self, token):
-		print("Syntax error at or near `%s' token" % token)
+	def error(self, token, line):
+		print("Syntax error at or near `%s' token %s" % (token, line))
 		raise SystemExit
 
 	def parse(self, tokens):
@@ -331,14 +338,14 @@ class GenericParser:
 			sets.append([])
 			self.makeSet(None, sets, len(tokens))
 
-		#_dump(tokens, sets, self.states)
+		_dump(tokens, sets, self.states)
 
 		finalitem = (self.finalState(tokens), 0)
 		if finalitem not in sets[-2]:
 			if len(tokens) > 0:
-				self.error(tokens[i-1])
+				self.error(tokens[i-1], _line())
 			else:
-				self.error(None)
+				self.error(None, _line())
 
 		return self.buildTree(self._START, finalitem,
 				      tokens, len(sets)-2)
@@ -840,9 +847,11 @@ def _dump(tokens, sets, states):
 			print('\t', item)
 			for (lhs, rhs), pos in states[item[0]].items:
 				print('\t\t', lhs, '::=', end=' ')
-				print(string.join(rhs[:pos]), end=' ')
+				#print(string.join(rhs[:pos]), end=' ')
+				print(rhs[:pos])
 				print('.', end=' ')
-				print(string.join(rhs[pos:]))
+				#print(string.join(rhs[pos:]))
+				print(rhs[pos:])
 		if i < len(tokens):
 			print()
 			print('token', str(tokens[i]))

@@ -1,5 +1,20 @@
 from spark import GenericScanner, GenericParser
 
+class Token():
+	def __init__(self, type, attr = None):
+		self.typ = type
+		self.attribute = attr
+
+	def __str__(self):
+		if(self.attribute is not None):
+			return self.typ + " " + self.attribute
+		else:
+			return self.typ
+
+	def __unicode__(self):
+		return self.__str__()
+
+
 class SimpleScanner(GenericScanner):
 	def __init__(self):
 		GenericScanner.__init__(self)
@@ -56,12 +71,15 @@ class ExprParser(GenericParser):
 
 def lex(inStream):
 	scanner = SimpleScanner()
-	return scanner.tokenize(input)
+	return scanner.tokenize(inStream)
 
 def parse(tokens):
 	parser = ExprParser()
+	print("after parser constructor", tokens)
 	return parser.parse(tokens)
 
 if __name__ == "__main__":
 	print("init")
-	parse(lex("8234 242348 423423 + 4234 * 234234"))
+	lr = lex("8234 242348 423423 + 4234 * 234234")
+	print("after lex")
+	parse(lr)
